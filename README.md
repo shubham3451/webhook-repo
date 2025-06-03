@@ -117,16 +117,6 @@ Each event is stored with the following schema:
 
 ---
 
-## 📬 Submission Checklist
-
-* [x] Webhook events are received and parsed
-* [x] MongoDB stores the relevant information
-* [x] UI displays event logs in correct format
-* [x] Polling mechanism working every 15s
-* [x] Push, Pull Request, and Merge actions handled
-
----
-
 ## 🔗 Repository Links
 
 * **Action Repo:** [🔗 GitHub - action-repo](https://github.com/shubham3451/action-repo/)
