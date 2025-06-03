@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GitHub Repo Activity</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 40px auto;
+      max-width: 600px;
+      background-color: #fafafa;
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    ul#events-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .event {
+      background: white;
+      border-left: 5px solid #007bff;
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .event.push { border-left-color: #28a745; }
+    .event.pull_request { border-left-color: #ffc107; }
+    .event.merge { border-left-color: #6f42c1; }
+  </style>
+</head>
+<body>
+  <h2>📡 GitHub Repository Activity</h2>
+  <ul id="events-list"></ul>
+
+  <script>
+    let lastSeenTime = null;
+    const displayedIds = new Set(); // Prevent duplicates
+
+    function formatTimestamp(isoString) {
+      const date = new Date(isoString);
+
+      const day = date.getUTCDate();
+      const suffix = (d => ['th','st','nd','rd'][((d%100)/10^1^1)&&d%10]||'th')(day);
+      const month = date.toLocaleString('default', { month: 'long' });
+      const year = date.getUTCFullYear();
+      const hours = date.getUTCHours();
+      const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+
+      const hour12 = hours % 12 || 12;
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+
+      return `${day}${suffix} ${month} ${year} - ${hour12}:${minutes} ${ampm} UTC`;
+    }
+
+    async function fetchEvents() {
+      let url = "/webhook/events";
+      if (lastSeenTime) {
+        url += "?since=" + encodeURIComponent(lastSeenTime);
+      }
+
+      const res = await fetch(url);
+      const events = await res.json();
+
+      if (events.length === 0) return;
+
+      const list = document.getElementById("events-list");
+
+      events.forEach(event => {
+        const { message, timestamp } = event;
+
+        if (displayedIds.has(timestamp)) return; // Skip if already displayed
+
+        const item = document.createElement("li");
+        item.className = "event";
+
+        // Add action class for color coding
+        if (message.includes("pushed")) item.classList.add("push");
+        else if (message.includes("submitted a pull request")) item.classList.add("pull_request");
+        else if (message.includes("merged branch")) item.classList.add("merge");
+
+        item.textContent = message;
+        list.insertBefore(item, list.firstChild);
+
+        displayedIds.add(timestamp); // Mark as displayed
+      });
+
+      lastSeenTime = events[0].timestamp; // Use latest timestamp for next poll
+    }
+
+    fetchEvents(); // Initial load
+    setInterval(fetchEvents, 15000); // Poll every 15 seconds
+  </script>
+</body>
+</html>
